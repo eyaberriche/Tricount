@@ -3,7 +3,8 @@ import {DefaultCrudRepository, repository, HasManyThroughRepositoryFactory} from
 import {MongoDataSource} from '../datasources';
 import {Tricount, TricountRelations, User, TricountUser} from '../models';
 import {TricountUserRepository} from './tricount-user.repository';
-import {UserRepository} from './user.repository';
+import { UserrRepository } from './user.repository';
+
 
 export class TricountRepository extends DefaultCrudRepository<
   Tricount,
@@ -17,10 +18,11 @@ export class TricountRepository extends DefaultCrudRepository<
         >;
 
   constructor(
-    @inject('datasources.mongo') dataSource: MongoDataSource, @repository.getter('TricountUserRepository') protected tricountUserRepositoryGetter: Getter<TricountUserRepository>, @repository.getter('UserRepository') protected userRepositoryGetter: Getter<UserRepository>,
+    @inject('datasources.mongo') dataSource: MongoDataSource, @repository.getter('TricountUserRepository') protected tricountUserRepositoryGetter: Getter<TricountUserRepository>, @repository.getter('UserrRepository') protected userRepositoryGetter: Getter<UserrRepository>,
   ) {
     super(Tricount, dataSource);
     this.users = this.createHasManyThroughRepositoryFactoryFor('users', userRepositoryGetter, tricountUserRepositoryGetter,);
     this.registerInclusionResolver('users', this.users.inclusionResolver);
   }
+
 }

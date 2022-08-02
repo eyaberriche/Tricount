@@ -1,4 +1,4 @@
-import {
+/*import {
   Count,
   CountSchema,
   Filter,
@@ -108,3 +108,4 @@ export class UserDepenseController {
     return this.userRepository.depenses(id).delete(where);
   }
 }
+*/

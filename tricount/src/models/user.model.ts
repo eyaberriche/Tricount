@@ -14,6 +14,10 @@ export class User extends Entity {
 
   @property({
     type: 'string',
+    format: 'email',
+    index: {
+      unique: true
+  }
   })
   email: string;
 
@@ -29,8 +33,15 @@ export class User extends Entity {
 
   @property({
     type: 'string',
+    minLength: 8,
   })
   password: string;
+  @property({
+
+    default : 0
+  })
+  somme: number;
+
 
   @hasMany(() => Depense, {keyTo: 'user'})
   depenses: Depense[];

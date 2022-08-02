@@ -20,11 +20,11 @@ User,
 TricountUser,
 Tricount,
 } from '../models';
-import {UserRepository} from '../repositories';
+import {UserrRepository} from '../repositories';
 
 export class UserTricountController {
   constructor(
-    @repository(UserRepository) protected userRepository: UserRepository,
+    @repository(UserrRepository) protected UserrRepository: UserrRepository,
   ) { }
 
   @get('/users/{id}/tricounts', {
@@ -43,7 +43,7 @@ export class UserTricountController {
     @param.path.string('id') id: string,
     @param.query.object('filter') filter?: Filter<Tricount>,
   ): Promise<Tricount[]> {
-    return this.userRepository.tricounts(id).find(filter);
+    return this.UserrRepository.tricounts(id).find(filter);
   }
 
   @post('/users/{id}/tricounts', {
@@ -67,7 +67,7 @@ export class UserTricountController {
       },
     }) tricount: Omit<Tricount, 'id'>,
   ): Promise<Tricount> {
-    return this.userRepository.tricounts(id).create(tricount);
+    return this.UserrRepository.tricounts(id).create(tricount);
   }
 
   @patch('/users/{id}/tricounts', {
@@ -90,7 +90,7 @@ export class UserTricountController {
     tricount: Partial<Tricount>,
     @param.query.object('where', getWhereSchemaFor(Tricount)) where?: Where<Tricount>,
   ): Promise<Count> {
-    return this.userRepository.tricounts(id).patch(tricount, where);
+    return this.UserrRepository.tricounts(id).patch(tricount, where);
   }
 
   @del('/users/{id}/tricounts', {
@@ -105,6 +105,6 @@ export class UserTricountController {
     @param.path.string('id') id: string,
     @param.query.object('where', getWhereSchemaFor(Tricount)) where?: Where<Tricount>,
   ): Promise<Count> {
-    return this.userRepository.tricounts(id).delete(where);
+    return this.UserrRepository.tricounts(id).delete(where);
   }
 }

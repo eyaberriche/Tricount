@@ -1,4 +1,6 @@
-import {Entity, model, property} from '@loopback/repository';
+import {belongsTo, Entity, model, property} from '@loopback/repository';
+import { Tricount } from './tricount.model';
+import { User } from './user.model';
 
 @model()
 export class TricountUser extends Entity {
@@ -9,15 +11,13 @@ export class TricountUser extends Entity {
   })
   id?: string;
 
-  @property({
-    type: 'string',
-  })
+ 
+  @belongsTo(() => Tricount)
   tricount?: string;
 
-  @property({
-    type: 'string',
-  })
+  @belongsTo(() => User)
   user?: string;
+
 
   constructor(data?: Partial<TricountUser>) {
     super(data);

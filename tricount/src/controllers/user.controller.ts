@@ -13,6 +13,7 @@ import {
   get,
   getModelSchemaRef,
   param,
+  patch,
   post,
   put,
   requestBody,
@@ -71,7 +72,7 @@ export class UserController {
     @repository(UserrRepository) protected userrRepository: UserrRepository,
   ) {}
 
-
+   
 
   @get('/users')
   @response(200, {
@@ -110,16 +111,61 @@ export class UserController {
 
 
 
-  @put('/user/{id}')
-  @response(204, {
-    description: 'Userr PUT success',
+//@authenticate('jwt')
+@patch('/account/{id}')
+@response(200, {
+  description: 'patch success',
+  content: {
+    'application/json': {
+      schema: getModelSchemaRef(User, {includeRelations: true}),
+    },
+  },
+})
+async updateById(
+@param.path.string('id') id: string,
+@requestBody({
+  content: {
+    'application/json': {
+      schema: getModelSchemaRef(User ,{partial: true}),
+    },
+  },
+})
+user: User,
+): Promise<User> {
+//
+
+  const password = await hash(user.password, await genSalt());
+  await this.userrRepository.updateById( id , _.omit(user, 'password'));
+  const savedUser = await this.userrRepository.findById(id);
+
+  await this.userRepository.userCredentials(savedUser.id).create({password});
+
+  return savedUser;
+ 
+
+}
+
+  @post('/user/create')
+  @response(200, {
+    description: 'ajout d un User ',
+    content: {'application/json': {schema: getModelSchemaRef(User)}},
   })
-  async replaceById(
-    @param.path.string('id') id: string,
-    @requestBody() userr: User,
-  ): Promise<void> {
-    await this.userrRepository.replaceById(id, userr);
+  async create(
+    @requestBody({
+      content: {
+        'application/json': {
+          schema: getModelSchemaRef(User, {
+            title: 'NewUser',
+            exclude: ['id','email','password'],
+          }),
+        },
+      },
+    })
+    User: Omit<User, 'id'>,
+  ): Promise<User> {
+    return this.userrRepository.create(User);
   }
+
 
   @del('/user/{id}')
   @response(204, {

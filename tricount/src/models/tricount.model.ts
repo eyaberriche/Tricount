@@ -1,6 +1,7 @@
 import {Entity, model, property, hasMany} from '@loopback/repository';
 import {User} from './user.model';
 import {TricountUser} from './tricount-user.model';
+import { Depense } from './depense.model';
 
 @model()
 export class Tricount extends Entity {
@@ -26,6 +27,8 @@ export class Tricount extends Entity {
     default: 0,
   })
   total?: number;
+  @hasMany(() => Depense, {keyTo: 'tricount'})
+  depenses: Depense[];
 
   @hasMany(() => User, {through: {model: () => TricountUser, keyFrom: 'tricount', keyTo: 'user'}})
   users: User[];

@@ -7,23 +7,23 @@ export class Depense extends Entity {
     id: true,
     generated: true,
   })
-  id?: string;
+  id: string;
 
   @property({
     type: 'string',
   })
-  name?: string;
+  name: string;
 
   @property({
     type: 'number',
     default: 0,
   })
-  price?: number;
+  price: number;
 
   @property({
     type: 'string',
   })
-  user?: string;
+  user: string;
 
   constructor(data?: Partial<Depense>) {
     super(data);

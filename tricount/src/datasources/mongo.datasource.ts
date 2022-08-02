@@ -9,18 +9,18 @@ const config = {
   port: 0,
   user: '',
   password: '',
-  database: 'tr',
+  database: 'mongo',
   useNewUrlParser: true
 };
 
 @lifeCycleObserver('datasource')
 export class MongoDataSource extends juggler.DataSource
   implements LifeCycleObserver {
-  static dataSourceName = 'tr';
+  static dataSourceName = 'mongo';
   static readonly defaultConfig = config;
 
   constructor(
-    @inject('datasources.config.tr', {optional: true})
+    @inject('datasources.config.mongo', {optional: true})
     dsConfig: object = config,
   ) {
     super(dsConfig);
