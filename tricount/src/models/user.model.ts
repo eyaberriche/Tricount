@@ -33,11 +33,10 @@ export class User extends Entity {
 
   @property({
     type: 'string',
-    minLength: 8,
+     minLength: 8,
   })
   password: string;
   @property({
-
     default : 0
   })
   somme: number;
@@ -46,7 +45,7 @@ export class User extends Entity {
   @hasMany(() => Depense, {keyTo: 'user'})
   depenses: Depense[];
 
-  @hasMany(() => Tricount, {through: {model: () => TricountUser, keyFrom: 'user', keyTo: 'tricount'}})
+  @hasMany(() => Tricount, {through: {model: () => TricountUser, keyFrom: 'userId', keyTo: 'tricountId'}})
   tricounts: Tricount[];
 
   constructor(data?: Partial<User>) {

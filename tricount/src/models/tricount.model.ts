@@ -30,8 +30,11 @@ export class Tricount extends Entity {
   @hasMany(() => Depense, {keyTo: 'tricount'})
   depenses: Depense[];
 
-  @hasMany(() => User, {through: {model: () => TricountUser, keyFrom: 'tricount', keyTo: 'user'}})
+  @hasMany(() => User, {through: {model: () => TricountUser, keyFrom: 'tricountId', keyTo: 'userId'}})
   users: User[];
+
+
+
 
   constructor(data?: Partial<Tricount>) {
     super(data);

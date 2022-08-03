@@ -15,7 +15,6 @@ import {
   param,
   patch,
   post,
-  put,
   requestBody,
   response,
   SchemaObject
@@ -145,22 +144,14 @@ user: User,
 
 }
 
+
   @post('/user/create')
   @response(200, {
     description: 'ajout d un User ',
     content: {'application/json': {schema: getModelSchemaRef(User)}},
   })
   async create(
-    @requestBody({
-      content: {
-        'application/json': {
-          schema: getModelSchemaRef(User, {
-            title: 'NewUser',
-            exclude: ['id','email','password'],
-          }),
-        },
-      },
-    })
+    @requestBody(CredentialsRequestBody)
     User: Omit<User, 'id'>,
   ): Promise<User> {
     return this.userrRepository.create(User);

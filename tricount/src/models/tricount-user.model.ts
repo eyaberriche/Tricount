@@ -11,13 +11,11 @@ export class TricountUser extends Entity {
   })
   id?: string;
 
- 
   @belongsTo(() => Tricount)
-  tricount?: string;
+  tricountId: string;
 
   @belongsTo(() => User)
-  user?: string;
-
+  userId: string;
 
   constructor(data?: Partial<TricountUser>) {
     super(data);

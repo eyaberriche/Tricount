@@ -24,6 +24,11 @@ export class Depense extends Entity {
     type: 'string',
   })
   user: string;
+  
+  @property({
+    type: 'string',
+  })
+  tricount: string;
 
   constructor(data?: Partial<Depense>) {
     super(data);
