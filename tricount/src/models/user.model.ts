@@ -15,9 +15,7 @@ export class User extends Entity {
   @property({
     type: 'string',
     format: 'email',
-    index: {
-      unique: true
-  }
+   
   })
   email: string;
 

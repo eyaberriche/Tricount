@@ -1,4 +1,5 @@
 import {authenticate} from '@loopback/authentication';
+import { inject } from '@loopback/core';
 import {
   FilterExcludingWhere,
   repository
@@ -8,8 +9,9 @@ import {
   getModelSchemaRef, param, patch, post, put, requestBody,
   response
 } from '@loopback/rest';
+import { SecurityBindings, UserProfile } from '@loopback/security';
 import {Depense} from '../models';
-import {DepenseRepository} from '../repositories';
+import {DepenseRepository, UserrRepository} from '../repositories';
 
 import {TricountRepository} from '../repositories';
 
@@ -17,39 +19,34 @@ export class DepenseController {
   constructor(
     @repository(DepenseRepository)
     public depenseRepository : DepenseRepository,
-    @repository(TricountRepository)
-    public tricountRepository :TricountRepository,
+    
+    @repository(UserrRepository)
+    public userrRepository : UserrRepository,
   ) {}
-  //@authenticate('jwt')
-/*   @post('/depenses')
+
+  //depense d'un user with param id
+  @authenticate('jwt')
+  @get('/depensesUser/{id}')
   @response(200, {
-    description: 'Depense model instance',
-    content: {'application/json': {schema: getModelSchemaRef(Depense)}},
-  })
-  async create(
-    @requestBody({
-      content: {
-        'application/json': {
-          schema: getModelSchemaRef(Depense, {
-            title: 'NewDepense',
-            exclude: ['id'],
-          }),
+    description: 'Array of Depense model instances',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'array',
+          items: getModelSchemaRef(Depense, {includeRelations: true}),
         },
       },
-    })
-    depense: Omit<Depense, 'id'>,
-  ): Promise<Depense> {
-
-   const pers = await this.personRepository.findById(depense.person)
-   const tricount = await this.tricountRepository.findById(pers.tricount)
-   const somme = pers.somme + depense.price
-   const total = depense.price + tricount.total
-   await  this.personRepository.updateById(pers.id , {somme: somme});
-   await  this.tricountRepository.updateById(tricount.id , {total: total});
-   return this.depenseRepository.create(depense);
+    },
+  })
+  async finddepenseuser(
+    @param.path.string('id') id: string
+  ): Promise<Depense[]> {
+    return this.depenseRepository.find({where: {user: id}});
   }
+
+  //depenses d'un user connecté
   @authenticate('jwt')
-  @get('/depenses/{id}')
+  @get('/depenses')
   @response(200, {
     description: 'Array of Depense model instances',
     content: {
@@ -62,10 +59,13 @@ export class DepenseController {
     },
   })
   async find(
-    @param.path.string('id') id: string
+    @inject(SecurityBindings.USER)
+    currentUserProfile: UserProfile,
   ): Promise<Depense[]> {
-    return this.depenseRepository.find({where: {person: id}});
+
+    return this.depenseRepository.find({where: {user: currentUserProfile.id}});
   }
+//get depense by id
   @authenticate('jwt')
   @get('/depense/{id}')
   @response(200, {
@@ -105,33 +105,40 @@ export class DepenseController {
 ): Promise<void> {
   const first = await this.depenseRepository.findById(id)
 
-  const pers = await this.personRepository.findById(first.person)
-  const tricount = await this.tricountRepository.findById(pers.tricount)
-  const somme = (pers.somme - first.price) + depense.price;
-  const total = (tricount.total- first.price) + depense.price;
-  await this.personRepository.updateById(pers.id , {somme: somme});
-  await this.tricountRepository.updateById(tricount.id , {total: total});
+  const user = await this.userrRepository.findById(first.user)
+  const somme = (user.somme - first.price) + depense.price;
+  await this.userrRepository.updateById(user.id , {somme: somme});
   await this.depenseRepository.updateById(id, depense);
   //return this.depenseRepository.findById(id);
 
 }
 
-@put('/depenses/{id}')
-@response(204, {
-  description: 'Depense PUT success',
+@post('/depense/new')
+@response(200, {
+  description: 'post success',
+  content: {
+    'application/json': {
+      schema: getModelSchemaRef(Depense, {includeRelations: true}),
+      exclude: ['id'],
+    },
+  },
 })
-async replaceById(
-  @param.path.string('id') id: string,
-  @requestBody() depense: Depense,
-): Promise<void> {
-  const first = await this.depenseRepository.findById(id)
-  const pers = await this.personRepository.findById(depense.person)
-  const tricount = await this.tricountRepository.findById(pers.tricount)
-  const somme = (pers.somme - first.price) + depense.price;
-  const total = (tricount.total- first.price) + depense.price;
-  await this.personRepository.updateById(pers.id , {somme: somme});
-  await this.tricountRepository.updateById(tricount.id , {total: total});
-  await this.depenseRepository.replaceById(id, depense);
+async createe(
+
+@requestBody({
+  content: {
+    'application/json': {
+      schema: getModelSchemaRef(Depense, {partial: true}),
+    },
+  },
+}) depense:Omit<Depense, 'id'>,
+
+): Promise<Depense> {
+  const user = await this.userrRepository.findById(depense.user)
+  const somme = user.somme + depense.price
+  await  this.userrRepository.updateById(user.id , {somme: somme});
+   return this.depenseRepository.create(depense);
+//return this.depenseRepository.findById(id);
 
 }
 
@@ -142,12 +149,9 @@ async replaceById(
   })
   async deleteById(@param.path.string('id') id: string): Promise<void> {
    const dep =  await this.depenseRepository.findById(id);
-   const pers = await this.personRepository.findById(dep.person)
-   const tricount = await this.tricountRepository.findById(pers.tricount)
+   const pers = await this.userrRepository.findById(dep.user)
    const somme = pers.somme - dep.price;
-   const total = (tricount.total- dep.price)
-   await this.personRepository.updateById(pers.id , {somme: somme});
-   await this.tricountRepository.updateById(tricount.id , {total: total});
+   await this.userrRepository.updateById(pers.id , {somme: somme});
    await this.depenseRepository.deleteById(id);
-  } */
+  } 
 }

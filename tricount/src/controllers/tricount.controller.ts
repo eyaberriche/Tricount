@@ -53,6 +53,7 @@ export class TricountController {
     return tr;
   }
  // tricount by user
+  @authenticate('jwt')
   @get('/tricounts')
   @response(200, {
     description: 'afficher les tricounts dun user',
@@ -69,16 +70,13 @@ export class TricountController {
     @inject(SecurityBindings.USER)
     currentUserProfile: UserProfile,
   ): Promise<Tricount[]> {
+    const identites: string[] = []
     const us = currentUserProfile.id
-    return this.tricountRepository.find({  include: [
-      {
-        relation: 'persons',
-        scope: {
-          include: [{relation: 'depenses'}],
-        },
-      },
-    ] });
+    const trus = await this.tricountUserRepository.find({where : {userId : us}})
+    trus.map(tu => {identites.push(tu.tricountId)})
+    return this.tricountRepository.find({where: { id: { inq: identites}}})
   }
+  
 
 // afficher un tricount by id
 //@authenticate('jwt')
@@ -131,54 +129,17 @@ export class TricountController {
     description: 'Tricount deleted successfuly',
   })
   async deleteById(@param.path.string('id') id: string): Promise<void> {
-   //const persons = await this.personRepository.find({where : { tricount : id}})
-   //persons.map(async x => { await this.depenseRepository.deleteAll({person : x.id})
-   //await this.personRepository.deleteById(x.id)})
-
-
-   await this.tricountRepository.deleteById(id);
+    const identites: string[] = [] //id mta users tb3in tricount param id
+    const trus = await this.tricountUserRepository.find({where : {tricountId : id}})
+    trus.map(tu => {identites.push(tu.userId)})
+    await this.tricountUserRepository.deleteAll({tricountId : id})
+    await this.depenseRepository.deleteAll({tricount : id})
+    await this.userrRepository.deleteAll({ id: { inq: identites}})
+    await this.tricountRepository.deleteById(id);
   }
 
 
-  @get('/plusliste/{id}')
-  @response(200, {
-    description: 'get plus liste by tricount id',
-
-  })
-  async findplusliste(
-    @param.path.string('id') id: string,
-
-  ): Promise<User[]> {
-    const tr = await this.tricountRepository.findById(id)
-    const plusListe: User[] = [];
-
-    //const persons = await this.personRepository.find({where : {tricount : tr.id}})
-    /*persons.map(person => {
-     if (person.somme > (tr.total/persons.length))
-     {plusListe.push(person)}
-    })*/
-    return plusListe
-  }
-  @get('/moinsliste/{id}')
-  @response(200, {
-    description: 'get moinsliste by tricount id',
-
-  })
-  async findmoinsliste(
-    @param.path.string('id') id: string,
-
-  ): Promise<User[]> {
-    const tr = await this.tricountRepository.findById(id)
-    const plusListe: User[] = [];
-    //const persons = await this.personRepository.find({where : {tricount : tr.id}})
-   /* persons.map(person => {
-     if (person.somme < (tr.total/persons.length))
-     {plusListe.push(person)}
-    })*/
-     return plusListe;
-
-  }
- /* @get('/balances/{id}')
+  @get('/balances/{id}')
   @response(200, {
     description: 'get balances by tricount id',
 
@@ -190,23 +151,35 @@ export class TricountController {
     let i = 0;
     let j = 0;
     let message = '' ;
-    const tr = await this.tricountRepository.findById(id)
     const plusliste: User[] = [];
     const moinsliste: User[] = [];
-    const persons = await this.personRepository.find({where : {tricount : tr.id}})
-    const part = tr.total/persons.length
-    persons.map(person => {
-     if (person.somme > (tr.total/persons.length))
+    const identites: string[] = [] //id mta users tb3in tricount param id
+    const trus = await this.tricountUserRepository.find({where : {tricountId : id}})
+    trus.map(tu => {identites.push(tu.userId)})
+    const users  = await this.userrRepository.find({ where : {id: { inq: identites}}})
+    var total = 0
+    users.map(user => {
+      total += user.somme })
+      console.log("total"+ total)
+    const part = total/users.length
+    users.map(person => {
+     if (person.somme > part)
      {plusliste.push(person)}
-     else
+     else if (person.somme < part)
      {moinsliste.push(person)}
+     else 
+     message = `${person.firstname} ${person.lastname} donne le montant exacte`
     })
+    // console.log("message: ", message)
+    // console.log("moinsliste: ",moinsliste)
+    console.log("plusliste: ",plusliste)
    while (i < moinsliste.length) {
   const debt = Math.min( part - moinsliste[i].somme, plusliste[j].somme - part);
+  
   moinsliste[i].somme += debt;
   plusliste[j].somme -= debt;
-
-  message = message +'\n'+`${plusliste[i].name} donne à ${moinsliste[j].name} ${debt}`;
+ 
+  message = message +'\n'+`  ${moinsliste[i].firstname} donne à  ${plusliste[j].firstname} ${debt}`;
 
   if (moinsliste[i].somme === part) {
     i++;
@@ -216,6 +189,6 @@ export class TricountController {
     j++;
   }}
     return message
-  }*/
+  }
 
 }

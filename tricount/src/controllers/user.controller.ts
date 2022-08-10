@@ -23,7 +23,7 @@ import {SecurityBindings, UserProfile} from '@loopback/security';
 import {genSalt, hash} from 'bcryptjs';
 import * as _ from 'lodash';
 import {User} from '../models';
-import {UserrRepository} from '../repositories';
+import {DepenseRepository, TricountRepository, TricountUserRepository, UserrRepository} from '../repositories';
 
 
 
@@ -68,7 +68,10 @@ export class UserController {
     @inject(SecurityBindings.USER, {optional: true})
     public user: UserProfile,
     @repository(UserRepository) protected userRepository: UserRepository,
+    @repository(DepenseRepository) protected depenseRepository: DepenseRepository,
     @repository(UserrRepository) protected userrRepository: UserrRepository,
+    @repository(TricountUserRepository) protected tricountUserRepository: TricountUserRepository,
+    @repository(TricountRepository) protected tricountRepository: TricountRepository,
   ) {}
 
    
@@ -122,13 +125,7 @@ export class UserController {
 })
 async updateById(
 @param.path.string('id') id: string,
-@requestBody({
-  content: {
-    'application/json': {
-      schema: getModelSchemaRef(User ,{partial: true}),
-    },
-  },
-})
+@requestBody(CredentialsRequestBody)
 user: User,
 ): Promise<User> {
 //
@@ -145,26 +142,33 @@ user: User,
 }
 
 
-  @post('/user/create')
+  @post('/user/create/{id}')
   @response(200, {
     description: 'ajout d un User ',
     content: {'application/json': {schema: getModelSchemaRef(User)}},
   })
   async create(
-    @requestBody(CredentialsRequestBody)
+    @param.path.string('id') id: string,
+    @requestBody({
+      content: {
+        'application/json': {
+          schema: getModelSchemaRef(User, {
+            title: 'NewDepense',
+            exclude: ['id'],
+          }),
+        },
+      },
+    })
     User: Omit<User, 'id'>,
   ): Promise<User> {
-    return this.userrRepository.create(User);
+    const us = await this.userrRepository.create(User);
+    const tr = await this.tricountRepository.findById(id);
+    const truser = {userId : us.id , tricountId: tr.id}
+    this.tricountUserRepository.create(truser)
+    return us
   }
 
 
-  @del('/user/{id}')
-  @response(204, {
-    description: 'Userr DELETE success',
-  })
-  async deleteById(@param.path.string('id') id: string): Promise<void> {
-    await this.userrRepository.deleteById(id);
-  }
 
 
   @post('/user/login', {
@@ -252,9 +256,22 @@ user: User,
     const savedUser = await this.userrRepository.create(
       _.omit(requser, 'password'),
     );
-
+  
     await this.userRepository.userCredentials(savedUser.id).create({password});
 
     return savedUser;
   }
-}
+   @authenticate('jwt')
+   @del('/user/{id}')
+   @response(204, {
+     description: 'User DELETE success',
+   })
+   async deletebyid(@param.path.string('id') id: string): Promise<void> {
+ 
+    await this.depenseRepository.deleteAll({user : id })
+    await this.tricountUserRepository.deleteAll({userId : id})
+    await this.userrRepository.deleteById(id);
+   }
+
+
+ }
